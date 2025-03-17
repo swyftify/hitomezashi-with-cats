@@ -3,6 +3,7 @@ import cats.effect.*
 import cats.syntax.all.*
 import generator.{CoinTossGenerator, GridGenerator}
 import model.GridCell
+import scalafx.scene.shape.Rectangle
 import ui.UI
 
 object App extends IOApp.Simple {
@@ -12,7 +13,7 @@ object App extends IOApp.Simple {
 
   val grid = (width, height, CoinTossGenerator(): GridGenerator)
 
-  val cellGeneratorFunction
+  private val cellGeneratorFunction
       : Kleisli[IO, (Int, Int, GridGenerator), Map[(Int, Int), GridCell]] =
     Kleisli { case (rows, cols, generator) =>
       (0 until rows).toList
@@ -23,8 +24,15 @@ object App extends IOApp.Simple {
         .map(_.map(cell => cell.position -> cell).toMap)
     }
 
+  private val objectGeneratorFunction
+      : Kleisli[IO, Map[(Int, Int), GridCell], List[Rectangle]] =
+    Kleisli { map => map.values.toList.parTraverse(_.generateDrawObject()) }
+
+  val generatorFlow: Kleisli[IO, (Int, Int, GridGenerator), List[Rectangle]] =
+    cellGeneratorFunction andThen objectGeneratorFunction
+
   override def run: IO[Unit] =
-    cellGeneratorFunction.run(grid).flatMap { gridMap =>
+    generatorFlow.run(grid).flatMap { gridMap =>
       IO {
         println(gridMap)
         UI(width -> height, gridMap).main(Array.empty)
