@@ -1,5 +1,5 @@
 # scala-cli, bloop, metals
-.bsp/
+../.bsp/
 .bloop/
 .metals/
 .scala-build/
@@ -12,7 +12,9 @@ project/metals.sbt
 # sbt
 project/project/
 project/target/
-target/
+target/**
+
+.idea
 
 # intellij idea
 *.log
